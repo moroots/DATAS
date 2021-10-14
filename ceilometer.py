@@ -141,3 +141,5 @@ data1, files = lidar.read_nc(path)
 lims = ['2018-07-01 00:00', '2018-07-02 23:00']
 # data = lidar.plotting(files, title=f'UMBC Celiometer: {lims[0]} to {lims[1]}', lim=lims)
 data = lidar.plotting(data1, lims)
+
+# datetime.datetime.strptime(str(test), "%Y%m%d.%H") + datetime.timedelta(hours = time[0])
