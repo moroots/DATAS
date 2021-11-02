@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+ # -*- coding: utf-8 -*-
 """
 Created on Sun Jun 21 16:40:03 2020
 
@@ -39,11 +39,11 @@ class pandonia:
         return uL
 
     def plot(dataframe, mol=None, flt='on', title=None, savpath=None):
-        ### Description ###
+        '''### Description ###
         # dataframe -> enter pandas data frame
         # start     -> enter starting date (or datetime) as string
         # stop      -> ente stoping date (or datetime) as string
-        # fig
+        # fig'''
 
         if mol and type(mol) is not str: print('Molecule type must be a string value')
         if title and type(title) is not str: print('Title type must be a string value')
@@ -104,13 +104,13 @@ class pandonia:
         return uL
 
     def plot_by_date(dataframe, start, stop, mol=None, flt='off', title=None, savpath=None):
-        ### Description ###
+        '''### Description ###
         # dataframe -> enter pandas data frame
         # start     -> enter starting date (or datetime) as string
         # stop      -> ente stoping date (or datetime) as string
         # fig
 
-        ### Output => dateframe with
+        ### Output => dateframe with'''
 
         uL = pandonia.flt_by_date(dataframe, start, stop); uL = uL.reset_index()
 
@@ -149,7 +149,9 @@ class pandonia:
                 uL[filename.split('\\')[-1]] = pd.read_csv(f, sep=" ", parse_dates=[0], header=None, skiprows=cells[1]+1, low_memory=False)
                 print(filename.split('\\')[-1], '\t -> Loaded')
                 f.close()
+
         name = list(uL.keys())
+
         if par != None:
             if 'filter by date' in par and date_start !=None:
                 if date_start & date_stop:
@@ -162,3 +164,63 @@ class pandonia:
 
         return uL, uL_head, name
 
+if __name__ == '__main__':
+
+    from bs4 import BeautifulSoup
+    import requests
+    from pathlib import Path
+    import os
+
+    # def data_pandonia_database():
+
+
+    def data_pandonia_download(location, instrument, level, file, destination_path):
+        if location is not type([]): location = [location]
+        if instrument is not type([]): instrument = [instrument]
+        if level is not type([]): level = [level]
+
+        for loc in location:
+            for instr in instrument:
+                for ft in filetype:
+                    if file is not type([]):
+                        file = [file]
+                    elif file == 'all':
+                        path = "http://data.pandonia-global-network.org/{loc}/{instr}/{ft}/{fil}"
+                        page = requests.get(file_url)
+
+                    for fil in file:
+                        path = "http://data.pandonia-global-network.org/{loc}/{instr}/{ft}/{fil}"
+                        file_url = parent + path
+                        page = requests.get(file_url)
+
+                        savnam = destination_path / Path(path)
+                        os.makedirs(os.path.dirname(savnam), exist_ok=True)
+                        with open(savnam, 'wb') as f:
+                            f.write(page.content)
+                            f.close()
+                        print(f"Downloaded -> {fil}")
+
+        # if 'all' in file
+
+        return
+
+    destination_path = r"C:\Users\Magnolia\OneDrive - UMBC\Research\Data\Smoke Case 20200308\Pandora"
+    location = r"GreenbeltMD"
+    instrument = r"Pandora32s1"
+    filetype = r"L1"
+    file = r"Pandora32s1_GreenbeltMD_20171222_L1_smca1c1p1-7.txt.bz2"
+    data_pandonia_download(location, instrument, filetype, file, destination_path)
+
+
+
+#%%
+import bz2
+
+savnam = f"{destination_path}/{location}/{instrument}/{filetype}/{file}"
+with bz2.open(savnam, "rb") as f:
+    # Decompress data from file
+    content = f.read()
+with open(savnam.strip('.bz2'), 'wb') as fil:
+    fil.write(content)
+
+#%%
