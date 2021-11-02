@@ -214,13 +214,13 @@ if __name__ == '__main__':
 
 
 #%%
-import bz2
+# import bz2
 
-savnam = f"{destination_path}/{location}/{instrument}/{filetype}/{file}"
-with bz2.open(savnam, "rb") as f:
-    # Decompress data from file
-    content = f.read()
-with open(savnam.strip('.bz2'), 'wb') as fil:
-    fil.write(content)
+# savnam = f"{destination_path}/{location}/{instrument}/{filetype}/{file}"
+# with bz2.open(savnam, "rb") as f:
+#     # Decompress data from file
+#     content = f.read()
+# with open(savnam.strip('.bz2'), 'wb') as fil:
+#     fil.write(content)
 
 #%%
