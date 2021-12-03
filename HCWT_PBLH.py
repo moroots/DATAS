@@ -16,6 +16,9 @@ import os
 from glob import glob
 from matplotlib.colors import LogNorm
 import pandas as pd
+from scipy.signal import savgol_filter
+from scipy.signal import convolve
+
 
 #%% Function Space
 
@@ -151,9 +154,14 @@ def savgol(backscatter):
     for t in range(0, len(smoothed[0,:])):
         profile_interp = pd.DataFrame({"flt_backscatter":backscatter[:,t]})
         profile_interp["intp_backscatter"] = profile_interp["flt_backscatter"].interpolate(method="linear")
-        # print(profile_interp["intp_backscatter"].iloc[1], profile_interp["intp_backscatter"].iloc[-1])
-        smoothed[:, t] = savgol_filter(profile_interp["intp_backscatter"], window_length=11, polyorder=2)
+        smoothed[:, t] = savgol_filter(profile_interp["intp_backscatter"], window_length=11, polyorder=3)
     return smoothed
+
+def moving_average(data, window):
+    df = pd.DataFrame(data["backscatter"].T, index=data["time"], columns=data["alt"])
+    df_avg = df.rolling(window).mean()
+    df_avg=df_avg.to_numpy()
+    return df_avg.T
 
 #%% Importing the data
 
@@ -164,15 +172,14 @@ data = variables(dataset, files)
 
 #%% Testbed
 start_time = time.time()
-from scipy.signal import savgol_filter
+
 
 a = 5
 alt_stop = np.where(data["alt"]>=8000)[0][0]
 alt_start = np.where(data["alt"]>=200)[0][0]
 
-# pblh = pblh_timeseries(data["backscatter"][alt_start:alt_stop, :], data["alt"][alt_start:alt_stop], a)
-
-smoothed = savgol(data["backscatter"][alt_start:alt_stop, :])
+data["backscatter"][alt_start:alt_stop, :]
+smoothed = savgol()
 
 #%%
 
@@ -244,10 +251,14 @@ peaks_bottom = peaks_bottom.astype(int)
 df = pd.read_csv(r"C:/Users/Magnolia/OneDrive - UMBC/Research/Code/Python/FromKylie/New folder/vanessa_lufft_pbl.csv", header=None)
 
 #%%
+
 plt.figure(figsize=(12, 6), constrained_layout=True)
-im = plt.pcolormesh(data["time"],data["alt"],data["backscatter"],cmap='jet', norm=LogNorm())
+# im = plt.pcolormesh(data["time"],data["alt"],data["backscatter"],cmap='jet', norm=LogNorm())
+im = plt.pcolormesh(data["time"],data["alt"],df_avg.T,cmap='jet', norm=LogNorm())
+# im = plt.pcolormesh(data["time"],data["alt"][alt_start:alt_stop],smoothed,cmap='jet', norm=LogNorm())
+# im = plt.pcolormesh(data["time"],data["alt"],test,cmap='jet', norm=LogNorm())
 # plt.plot(data["time"], alt[peaks_bottom[:, 2]], '^', color="pink")
-plt.plot(data["time"], df[1], 'x', color="k")
+# plt.plot(data["time"], df[1], 'x', color="k")
 plt.ylim([0,6000])
 cbar = plt.colorbar()
 im.set_clim(vmin=10**3.5, vmax=10**8.5)
