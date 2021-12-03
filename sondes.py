@@ -79,3 +79,9 @@ class CFH:
         if plot is True: plot_Ozone()
         os.chdir(current)
         return uL, uL_head, names, uL_c
+
+
+#%%
+
+if __name__ == "__main__":
+    CFH.importing("C:/Users/Magnolia/Box/Diaz/Data/O3Sondes/2021")
