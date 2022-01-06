@@ -165,7 +165,7 @@ def moving_average(data, window):
 
 #%% Importing the data
 
-path = r"C:\Users\Magnolia\OneDrive - UMBC\Research\Data\Celiometer\test_data"
+path = r"C:\Users\magnolia\OneDrive - UMBC\Research\Code\Python\modules\incomplete\HaarCWT\test_data"
 dataset, files = read_nc(path)
 data = variables(dataset, files)
 
@@ -173,9 +173,11 @@ data = variables(dataset, files)
 #%% Testbed
 start_time = time.time()
 
+
 a = 5
 alt_stop = np.where(data["alt"]>=8000)[0][0]
 alt_start = np.where(data["alt"]>=200)[0][0]
+
 
 smoothed = savgol(data["backscatter"][alt_start:alt_stop, :])
 
@@ -199,40 +201,40 @@ print(f"Execuded in {round(end_time - start_time, 3)} seconds")
 
 #%% Finding Peaks
 
-# test_spot = 5000
-# from scipy.signal import find_peaks
-# alt = data["alt"][alt_start:alt_stop]
-# x = c_avg[:, test_spot]
+test_spot = 5000
+from scipy.signal import find_peaks
+alt = data["alt"][alt_start:alt_stop]
+x = c_avg[:, test_spot]
 
-# peaks_top, properties = find_peaks(x, height=0, threshold=500, distance=50, prominence=(5e3, 5e6))
-# peaks_bottom, properties = find_peaks(-1*x, height=0, threshold=100, distance=50, prominence=(5e3, 5e6))
+peaks_top, properties = find_peaks(x, height=0, threshold=500, distance=50, prominence=(5e3, 5e6))
+peaks_bottom, properties = find_peaks(-1*x, height=0, threshold=100, distance=50, prominence=(5e3, 5e6))
 
-# plt.figure()
-# plt.plot(x, alt)
-# plt.plot(x[peaks_top], alt[peaks_top], '^', color="tab:red")
-# plt.plot(x[peaks_bottom], alt[peaks_bottom], 'v', color="tab:red")
-# plt.xlim(-1e6, 1e7)
-# plt.ylabel("Altitude")
-# plt.title(f"20210517_Catonsville-MD_CHM160112_000.nc: t={test_spot}")
-# plt.show()
+plt.figure()
+plt.plot(x, alt)
+plt.plot(x[peaks_top], alt[peaks_top], '^', color="tab:red")
+plt.plot(x[peaks_bottom], alt[peaks_bottom], 'v', color="tab:red")
+plt.xlim(-1e6, 1e7)
+plt.ylabel("Altitude")
+plt.title(f"20210517_Catonsville-MD_CHM160112_000.nc: t={test_spot}")
+plt.show()
 
-# t_top = np.full(shape=alt[peaks_top].shape, fill_value=data["time"][test_spot])
-# t_bottom = np.full(shape=alt[peaks_bottom].shape, fill_value=data["time"][test_spot])
+t_top = np.full(shape=alt[peaks_top].shape, fill_value=data["time"][test_spot])
+t_bottom = np.full(shape=alt[peaks_bottom].shape, fill_value=data["time"][test_spot])
 
-# plt.figure(figsize=(12, 6), constrained_layout=True)
-# im = plt.pcolormesh(data["time"],data["alt"],data["backscatter"],cmap='jet', norm=LogNorm())
-# plt.axvline(data["time"][test_spot+30], linestyle='--', color="k")
-# plt.axvline(data["time"][test_spot-30], linestyle='--', color="k")
-# plt.plot(t_top, alt[peaks_top], 'v', color="pink")
-# plt.plot(t_bottom, alt[peaks_bottom], '^', color="pink")
-# plt.ylim([0,6000])
-# cbar = plt.colorbar()
-# im.set_clim(vmin=10**3.5, vmax=10**8.5)
-# cbar.set_label('Aerosol Backscatter')
-# plt.xlabel('Datetime (UTC)')
-# plt.ylabel('Altitude (m AGL)')
-# plt.title("20210517_Catonsville-MD_CHM160112_000.nc")
-# plt.show()
+plt.figure(figsize=(12, 6), constrained_layout=True)
+im = plt.pcolormesh(data["time"],data["alt"],data["backscatter"],cmap='jet', norm=LogNorm())
+plt.axvline(data["time"][test_spot+30], linestyle='--', color="k")
+plt.axvline(data["time"][test_spot-30], linestyle='--', color="k")
+plt.plot(t_top, alt[peaks_top], 'v', color="pink")
+plt.plot(t_bottom, alt[peaks_bottom], '^', color="pink")
+plt.ylim([0,6000])
+cbar = plt.colorbar()
+im.set_clim(vmin=10**3.5, vmax=10**8.5)
+cbar.set_label('Aerosol Backscatter')
+plt.xlabel('Datetime (UTC)')
+plt.ylabel('Altitude (m AGL)')
+plt.title("20210517_Catonsville-MD_CHM160112_000.nc")
+plt.show()
 
 #%% PLotting Pblh
 

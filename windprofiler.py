@@ -20,13 +20,12 @@ ftp.login()
 # # force UTF-8 encoding
 # ftp_server.encoding = "utf-8"
 
-
 # Get list of files
 ftp.dir()
 
 ftp.cwd("/LDAD/profiler/netCDF/")
 ftp.dir()
-filename = "20211209_0100.gz"
+filename = "20211213_0100.gz"
 save_path = r"C:/Users/Magnolia/OneDrive - UMBC\Research/Data/Wind Profilier/"
 save_name = save_path+filename
 perm_name = save_path+filename.replace(".gz", ".nc")
