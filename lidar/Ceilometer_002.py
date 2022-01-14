@@ -7,7 +7,6 @@ Created on Thu Jan 13 13:07:45 2022
 
 #%% Packages
 
-import datetime
 import numpy as np
 import matplotlib as mpl
 import matplotlib.dates as mdates
@@ -16,10 +15,7 @@ from scipy.signal import savgol_filter
 import matplotlib.pyplot as plt
 import scipy.ndimage
 import pandas as pd
-import pyhdf
-import pytz
 
-from pyhdf.SD import SD, SDC
 import xarray as xr
 
 
