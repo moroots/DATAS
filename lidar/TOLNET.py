@@ -18,6 +18,7 @@ import pandas as pd
 import pyhdf
 import pytz
 
+from pyhdf.SD import SD, SDC
 
 #%% Function Space
 
@@ -25,30 +26,30 @@ def clean_vars(var):
     var[var<=-999] = np.nan
     return var
 
-from pyhdf.SD import SD, SDC
+
 
 def import_tolnet(FilePaths, **kwargs):
     data={}
-    
+
     FileNames = [filePath.split("/")[-1] for filePath in FilePaths]
-    
+
     for fileName, filePath in zip(FileNames, FilePaths):
         data[fileName] = {}
         file = SD(filePath, SDC.READ)
-        
+
         data[fileName]["alt"] = file.select('ALTITUDE').get()
         data[fileName]["datetime"] = file.select('DATETIME.START').get() + 10957
         data[fileName]["O3MX"] = file.select('O3.MIXING.RATIO.VOLUME_DERIVED').get()
         data[fileName]["O3MX"] = clean_vars(data[fileName]["O3MX"])*1000
         data[fileName]["O3ND"] = file.select('O3.NUMBER.DENSITY_ABSORPTION.DIFFERENTIAL').get()
         data[fileName]["O3ND"] = clean_vars(data[fileName]["O3ND"])
-        
+
         if "vars" in kwargs.keys():
             for var in kwargs["vars"]:
                 data[fileName][var] = file.select(var).get()
-                
+
         data[fileName]["datasets"] = file.datasets()
-        
+
         file.end()
     return data
 
@@ -93,34 +94,34 @@ def O3_curtain_colors():
     nnorm = mpl.colors.BoundaryNorm(bounds, ncmap.N)
     return ncmap, nnorm
 
-def tolnet_curtains(data, smooth=True, **kwargs):        
-    
+def tolnet_curtains(data, smooth=True, **kwargs):
+
     fig = plt.figure(figsize=(15, 5))
     ax = plt.subplot(111)
     ncmap, nnorm = O3_curtain_colors()
-            
+
     plt.rc('font', size=16) #controls default text size
     plt.rc('axes', titlesize=16) #fontsize of the title
     plt.rc('axes', labelsize=16) #fontsize of the x and y labels
     plt.rc('xtick', labelsize=16) #fontsize of the x tick labels
     plt.rc('ytick', labelsize=16) #fontsize of the y tick labels
     plt.rc('legend', fontsize=16) #fontsize of the legend
-  
+
     for fileName in data.keys():
         # data[fileName]["O3MX_smooth"] = np.zeros(data[fileName]["O3MX"].shape)
         if smooth is True:
         #     data[fileName]["O3MX_smooth"] = scipy.ndimage.zoom(data[fileName]["O3MX"], 3)
-            X, Y, Z = (data[fileName]["datetime"],data[fileName]["alt"], data[fileName]["O3MX"].T)
+            X, Y, Z = (data[fileName]["datetime"],data[fileName]["alt"]/1000, data[fileName]["O3MX"].T)
         im = ax.pcolormesh(X, Y, Z, cmap=ncmap, norm=nnorm, shading="nearest")
-    
-    fig.colorbar(im, ax=ax, pad=0.02, ticks=[0.001, 50, 60, 70, 80, 90, 100, 125, 150, 200, 300])
-    
-        
+
+    fig.colorbar(im, ax=ax, pad=0.02, ticks=[0.001, 50, 60, 70, 90, 100, 300])
+
+
     if "title" in kwargs.keys():
         plt.title(kwargs["title"], fontsize=18)
     else: plt.title(r"$O_3$ Mixing Ratio Profile ($ppb_v$)", fontsize=18)
 
-    ax.set_ylabel("Altitude (m AGL)", fontsize=18)
+    ax.set_ylabel("Altitude (km AGL)", fontsize=18)
     ax.set_xlabel("Datetime (UTC)", fontsize=18)
 
     if "xlims" in kwargs.keys():
@@ -136,14 +137,14 @@ def tolnet_curtains(data, smooth=True, **kwargs):
         df = kwargs["surface"][0]
         dummy = np.ones(len(df))*kwargs["surface"][1]
         ax.scatter(df.index, dummy, c=df, cmap=ncmap, norm=nnorm)
-        
+
     converter = mdates.ConciseDateConverter()
     munits.registry[datetime.datetime] = converter
 
     ax.xaxis_date()
-    
+
     if "savefig" in kwargs.keys():
-        plt.savefig(f"{kwargs['savefig']}.png", dpi=600)
+        plt.savefig(f"{kwargs['savefig']}", dpi=600)
 
     plt.show()
     plt.rcParams.update(plt.rcParamsDefault)
@@ -161,6 +162,15 @@ files = [r"C:/Users/meroo/OneDrive - UMBC/Research/Analysis/May2021/data/TROPOZ/
 figPath = r"C:\Users\meroo\OneDrive - UMBC\Research\Analysis\May2021\Figures"
 
 data = import_tolnet(files)
-tolnet_curtains(data, ylims=[100, 3000, 500], xlims=["2021-05-18 12:00", "2021-05-23 12:00"], savefig=f"{figPath}\20210518_20210523")
-tolnet_curtains(data, ylims=[100, 3000, 500], xlims=["2021-05-18 12:00", "2021-05-21 00:00"], savefig=f"{figPath}\20210519_20210520")
-tolnet_curtains(data, ylims=[100, 3000, 500], xlims=["2021-05-20 12:00", "2021-05-21 00:00"], savefig=f"{figPath}\20210519_20210520")
+
+#%%
+parms = {"data": data,
+         "ylims":[0.1, 3.1, 0.4],
+         "title":r"TROPOZ $O_3$ Profile ($ppb_v$)"
+         }
+
+tolnet_curtains(**parms, xlims=["2021-05-18 12:00", "2021-05-23 00:00"], savefig=f"{figPath}\\TROPOZ_20210518_20210523.png")
+
+tolnet_curtains(**parms, xlims=["2021-05-18 12:00", "2021-05-21 00:00"], savefig=f"{figPath}\\TROPOZ_20210518_20210521.png")
+
+tolnet_curtains(**parms, xlims=["2021-05-20 00:00", "2021-05-21 00:00"], savefig=f"{figPath}\\20210520_20210521.png")

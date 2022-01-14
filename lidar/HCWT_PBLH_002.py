@@ -1,11 +1,12 @@
 # -*- coding: utf-8 -*-
 """
-Created on Wed Sep 15 12:38:12 2021
+Created on Thu Jan 13 18:30:32 2022
 
 @author: meroo
 """
 
 # %% Import Packages
+
 import matplotlib.pyplot as plt
 import numpy as np
 import time
@@ -18,80 +19,48 @@ import pandas as pd
 from scipy.signal import savgol_filter
 from scipy.signal import convolve
 
+from scipy.signal import find_peaks
+from pathlib import Path
+
+from numba import jit
+
+from metpy.units import units
 #%% Function Space
 
-def read_nc(dir_path):
+def importing_ceilometer(FilePaths, **kwargs):
+    data = {} # all data will be stored into a nested dictionary
+    files = {}
+    FilePaths = [Path(filePath) for filePath in FilePaths] # converting to Pathlib objects
 
-    uL = {}
-
-    if os.path.isdir(dir_path) is False:
-        print('PATH IS NOT FOUND ON MACHINE')
-        return
-
-    print(f'Importing lidar data from {dir_path} \n')
-
-    for filename in glob(os.path.join(dir_path, '*.nc')):
-        uL[filename.split('\\')[-1]] = xr.open_dataset(filename)
-        print(filename.split('\\')[-1], "-> Imported")
-
-    return uL, list(uL.keys())
-
-def variables(dataset, files):
-    def grab_it(data, file):
-        t = data[file].time
-        t = t.values
-
-        alt = data[file].range
-        alt = alt.values
-
-        # Gathering the bachscatter (i.e. beta_raw)
-        r = data[file].beta_raw
-        r = r.values
-
-        # Flip the image
-        r = np.array(r).T
-
-        # Filter for negative values
-        # r[r < 0] = np.nan
-        r[r < 0] = 0
-        np.warnings.filterwarnings('ignore')
-
-        ''' Merge Days (couple days) '''
-
-        alt1 = np.min(alt)
-        alt2 = np.max(alt)
-
-        x_lims = mdates.date2num(t)
-        return x_lims, alt, r, alt1, alt2, t
-
-    # if type(sav_path) is not str:
-    #     sav_path = r'C:\Users\meroo\OneDrive - UMBC\Research\Figures\Preliminary'
-    i = 0
-    t = []
-    alt = []
-    r = []
-    alt1 = []
-    alt2 = []
-
-    for file in files:
-        uL_t, uL_alt, uL_r, uL_alt1, uL_alt2, uL_time = grab_it(dataset, file)
-
-        if i == 0:
-            t, alt, r, alt1, alt2, time = grab_it(dataset, file)
-
-        i += 1
-
-        if i > 1:
-            t = np.append(t,uL_t)
-            alt = np.append(alt, uL_alt)
-            r = np.hstack((r, uL_r))
-            alt1 = np.append(alt1, uL_alt1)
-            alt2 = np.append(alt2, uL_alt2)
-            time = np.append(time,uL_time)
-    return {"x":t, "alt":alt, "backscatter":r, "time":time}
-
+    for filePath in FilePaths:
+        if filePath.is_file() is False:
+            print('PATH IS NOT FOUND ON MACHINE')
+            return
+        
+        fileName = filePath.name
+        data[fileName] = {} # Nested Dictionary
+        with xr.open_dataset(filePath) as file: # importing data as a pyhdf obj
+            data[fileName]["time"] = file.time.values
+            data[fileName]["time"] = file.time.values
+            data[fileName]["dateNum"] = [mdates.date2num(t) for t in data[fileName]["time"]]
+            data[fileName]["range"] = file.range.values
+            data[fileName]["beta_raw"] = file.beta_raw.values
+            data[fileName]["beta_raw"][data[fileName]["beta_raw"] < 0] = 0
+            data[fileName]["beta_raw"] = data[fileName]["beta_raw"].T
+            data[fileName]["instrument_pbl"] = file.pbl.values
+            data[fileName]["lat_lon_alt"] = [file.longitude.values, file.latitude.values, file.altitude.values]
+    
+            if "vars" in kwargs.keys():
+                for var in kwargs["vars"]:
+                    data[fileName][var] = file[var].values
+            
+            data[fileName]["datasets"] = list(file.keys())
+            files[fileName] = file
+            
+    return data, files
 
 # Calculate Haar Wavelet at only one altitude 'b'
+@jit(nopython=True)
 def haar(profile,alts,a,b):
 
     # Zero Array to fill in Wavelet
@@ -108,6 +77,7 @@ def haar(profile,alts,a,b):
     return w_ab
 
 # Function to loop altitudes
+@jit(nopython=True)
 def covariance_profile(profile,a,alts):
 
     # Initialize covariance array
@@ -126,8 +96,8 @@ def covariance_profile(profile,a,alts):
     return w
 
 # Applying HCWT on backscatter
+@jit(nopython=True)
 def pblh_timeseries(backscatter, alts, a):
-    # print(f"Lengths \n backscatter: {backscatter.shape} \n alts: {alts.shape}")
     start_time = time.time()
     pbl_top = []
     pbl_bottom = []
@@ -163,32 +133,31 @@ def moving_average(data, window):
 
 #%% Importing the data
 
-path = r"C:\Users\Magnolia\OneDrive - UMBC\Research\Data\Celiometer\test_data"
-dataset, files = read_nc(path)
-data = variables(dataset, files)
-
+FilePaths = [r"C:/Users/meroo/OneDrive - UMBC/Research/Data/Celiometer/test_data/20210518_Catonsville-MD_CHM160112_000.nc"]
+data, files = importing_ceilometer(FilePaths)
+keys = list(data.keys())
 
 #%% Testbed
 start_time = time.time()
 
 a = 5
-alt_stop = np.where(data["alt"]>=8000)[0][0]
-alt_start = np.where(data["alt"]>=200)[0][0]
+alt_stop = np.where(data[keys[0]]["range"]>=8000)[0][0]
+alt_start = np.where(data[keys[0]]["range"]>=100)[0][0]
 
-smoothed = savgol(data["backscatter"][alt_start:alt_stop, :])
+smoothed = savgol(data[keys[0]]["beta_raw"][alt_start:alt_stop, :])
 
 #%%
 
 a = [1, 10]
 a_vals = np.arange(a[0], a[1])
 # pblh = np.zeros((data["backscatter"][alt_start:alt_stop, :]).shape)
-c = np.zeros((len(data["alt"][alt_start:alt_stop]), len(a_vals)))
-alts = data["alt"][alt_start:alt_stop]
-c_avg = np.zeros((data["backscatter"][alt_start:alt_stop, :]).shape)
+c = np.zeros((len(data[keys[0]]["beta_raw"][alt_start:alt_stop]), len(a_vals)))
+alts = data[keys[0]]["range"][alt_start:alt_stop]
+c_avg = np.zeros((data[keys[0]]["beta_raw"][alt_start:alt_stop, :]).shape)
 
-for i in range(data["backscatter"][alt_start:alt_stop, :].shape[1]):
+for i in range(data[keys[0]]["beta_raw"][alt_start:alt_stop, :].shape[1]):
     for a, j in zip(a_vals, range(0, len(c)+1)):
-        c[:,j]= covariance_profile(data["backscatter"][alt_start:alt_stop, i], a, alts)
+        c[:,j]= covariance_profile(data[keys[0]]["beta_raw"][alt_start:alt_stop, i], a, alts)
         print(f"index: {i}, a = {a}")
     c_avg[:, i] = np.mean(c, axis=1)
 
@@ -198,7 +167,6 @@ print(f"Execuded in {round(end_time - start_time, 3)} seconds")
 #%% Finding Peaks
 
 # test_spot = 5000
-# from scipy.signal import find_peaks
 # alt = data["alt"][alt_start:alt_stop]
 # x = c_avg[:, test_spot]
 
@@ -238,16 +206,16 @@ peaks_bottom = np.zeros((len(c_avg[0,:]), 50))
 for i in range(0, len(c_avg[0,:])):
     peaks, properties = find_peaks(-1*c_avg[:, i], height=0, threshold=500, distance=50, prominence=(5e3, 5e4))
     order_test = sorted(((value, index) for index, value in enumerate(properties["prominences"])), reverse=True)
-    print(peaks)
+    # print(peaks)
     for j in range(0, len(peaks)):
         peaks_bottom[i, j] = peaks[order_test[j][1]]
-        print(peaks[j])
-    print(i)
+        # print(peaks[j])
+    # print(i)
 peaks_bottom = peaks_bottom.astype(int)
 
 #%%
 
-df = pd.read_csv(r"C:/Users/Magnolia/OneDrive - UMBC/Research/Code/Python/FromKylie/New folder/vanessa_lufft_pbl.csv", header=None)
+df = pd.read_csv(r"C:/Users/meroo/OneDrive - UMBC/Research/Code/Python/FromKylie/New folder/vanessa_lufft_pbl.csv", header=None)
 
 #%%
 
@@ -268,14 +236,56 @@ df = pd.read_csv(r"C:/Users/Magnolia/OneDrive - UMBC/Research/Code/Python/FromKy
 # plt.show()
 
 #%% TESTBED
+# Peak Picking Function
 
-# order_test = sorted(((value, index) for index, value in enumerate(properties["prominences"])), reverse=True)
+# @jit(nopython=True)
+def pick_peaks(data,peak_data,PBL_index0, units=1):
+    len_peaks = peak_data.shape[0]
+    selected_peaks = np.zeros(len_peaks)
+    selected_peaks[:] = -888
+    tt = data["time"]
+    zz = data["range"]*units
+    
+    for i in np.arange(len_peaks):
+    # for i in np.arange(100):
+        if i==0:
+            selected_peaks[i] = PBL_index0
+            i_m1 = i
+        else:
+            dt = tt[i]-tt[i_m1]
+            if dt<=np.timedelta64(30,'m'):
+                # test peak 1
+                if (zz[peak_data[i,0]]-zz[selected_peaks[i_m1].astype(int)])<(200*units) and peak_data[i,0]!=0:
+                    selected_peaks[i] = peak_data[i,0].astype(int)
+                    i_m1 = i
+                    continue
+                elif (zz[peak_data[i,1]]-zz[selected_peaks[i_m1].astype(int)])<(200*units) and peak_data[i,1]!=0:
+                    selected_peaks[i] = peak_data[i,1].astype(int)
+                    i_m1 = i
+                    continue
+                elif (zz[peak_data[i,2]]-zz[selected_peaks[i_m1].astype(int)])<(200*units) and peak_data[i,2]!=0:
+                    selected_peaks[i] = peak_data[i,2].astype(int)
+                    i_m1 = i
+                    continue
+                elif (zz[peak_data[i,3]]-zz[selected_peaks[i_m1].astype(int)])<(200*units) and peak_data[i,3]!=0:
+                    selected_peaks[i] = peak_data[i,3].astype(int)
+                    i_m1 = i
+                    continue
+                else:
+                    selected_peaks[i] = np.int64(-999)
+                    continue
+            if dt>np.timedelta64(10,'m'):
+                print('No viable continuous peaks found within 10 mins.',\
+                      'Peak identification stopped at time:',tt[i].astype(str)[11:19],\
+                      ',index:',i)
+                break
+                
+    return selected_peaks.astype(int)
 
-# print(data["alt"][test[order_test[5][1]]])
-#through this into the
 
-# for i in range(data["backscatter"][alt_start:alt_stop, :].shape[1]):
-#     for j in range(0, len(c)+1):
-#         c[:,j]= [covariance_profile(data["backscatter"][alt_start:alt_stop, i], a, alts) for a in a_vals]
-#         print(f"index: {i}, a = {a}")
-#     c_avg[:, i] = np.mean(c, axis=1)
+for key in keys:
+    data[key]["selected_peaks"] = pick_peaks(data[key],peaks_bottom,132)
+    
+    fig, ax = plt.subplots()
+    ax.pcolormesh(data[key]["time"], data[key]["range"], data[key]["beta_raw"])
+    # ax.plot(data[key]["selected_peaks"])
