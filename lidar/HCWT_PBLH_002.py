@@ -20,7 +20,6 @@ import pandas as pd
 
 # utilities
 from pathlib import Path
-from tqdm import tqdm
 from numba import jit
 import numpy as np
 import time
