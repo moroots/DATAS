@@ -169,12 +169,14 @@ def pick_peaks_001(data,peak_data,apriori_height=2000, Dy=200, Dt=np.timedelta64
                 
     return np.int64(selected_peaks)
 
-def pick_peaks_002(data,peak_data, Dy=200, Dt=np.timedelta64(30,'m'), **kwargs):
+def pick_peaks_002(data, key, peak_data, Dy=200, Dt=np.timedelta64(30,'m'), **kwargs):
     
     len_peaks = np.int64(len(peak_data))
     selected_peaks = np.ones(len_peaks)*-1
     blanks = 0
     
+    file = open(r"C:\Users\meroo\Box\Roots\PBL Codes\code\log\log_test.txt", "a")
+    file.write(f"{key}\n --- ")
     for i in np.arange(len_peaks):
         if i==0:
             selected_peaks[i] = peak_data[0,0]
@@ -204,9 +206,10 @@ def pick_peaks_002(data,peak_data, Dy=200, Dt=np.timedelta64(30,'m'), **kwargs):
             else:
                 blanks += 1
                 if blanks < 0.1*len_peaks:
-                    print("Too few points, attempt new apriori_height")
-                    break
-                
+                    file.write(f"Too many blanks: index {i}\n")
+                    # print("Too few points... First peak insufficient")
+                    # break
+    file.close()            
     return np.int64(selected_peaks)
 
 def estimate_pblh(data, a_vals, alt_constraint=[100, 4000], **kwargs):
@@ -241,7 +244,7 @@ def estimate_pblh(data, a_vals, alt_constraint=[100, 4000], **kwargs):
         peaks_data = np.int64(peaks_bottom)
         
         # Selecting PBLH
-        selected_peaks = pick_peaks_002(data[key],peaks_data, **parms__peak_selection)
+        selected_peaks = pick_peaks_002(data[key], key, peaks_data, **parms__peak_selection)
         df = pd.DataFrame({"peaks": selected_peaks, "time": data[key]["time"]})
         df = df[df.peaks > 0]
         df["heights"] = data[key]["range"][df["peaks"]]
@@ -260,34 +263,51 @@ if __name__ == "__main__":
     
     file_start_time = time.time()
     
-    FilePaths = [r"C:/Users/meroo/OneDrive - UMBC/Research/Data/Celiometer/test_data/20210518_Catonsville-MD_CHM160112_000.nc"]
+    FilePaths = [r"C:/Users/meroo/Box/Roots/PBL Codes/data/20210502_Catonsville-MD_CHM160112_000.nc",
+r"C:/Users/meroo/Box/Roots/PBL Codes/data/20210503_Catonsville-MD_CHM160112_000.nc",
+r"C:/Users/meroo/Box/Roots/PBL Codes/data/20210504_Catonsville-MD_CHM160112_000.nc"]
+    
     data, files = importing_ceilometer(FilePaths)
     keys = list(data.keys())
-
+    
     data = estimate_pblh(data=data, a_vals=np.arange(1, 500, 10))
 
 #%%
+
+    df = pd.read_csv(r"C:/Users/meroo/OneDrive - UMBC/Research/Code/Python/FromKylie/New folder/vanessa_lufft_pbl.csv", header=None)
+    
+    fig, ax1 = plt.subplots(figsize=(15, 8))
     for key in keys:
-        fig, (ax1, ax2) = plt.subplots(nrows=2, ncols=1, figsize=(15,8))
+        # fig, (ax1, ax2) = plt.subplots(nrows=2, ncols=1, figsize=(15,8))
+        
         
         im1 = ax1.pcolormesh(data[key]["time"], data[key]["range"], data[key]["beta_raw"], cmap='jet', norm=LogNorm())
-        im1.set_clim(vmin=10**4.5, vmax=10**5.2)
+        im1.set_clim(vmin=10**5, vmax=10**5.5)
         
         alt_start, alt_stop = data[key]["alt_start_stop"]
         
-        im2 = ax2.pcolormesh(data[key]["time"], data[key]["range"][alt_start:alt_stop], data[key]["c_avg"], cmap='jet', norm=LogNorm())
-        im2.set_clim(vmin=10**-3, vmax=10**2)
+        # im2 = ax2.pcolormesh(data[key]["time"], data[key]["range"][alt_start:alt_stop], data[key]["c_avg"], cmap='jet', norm=LogNorm())
+        # im2.set_clim(vmin=10**-3, vmax=10**2)
         
-        ax1.plot(data[key]["pblh"].time,data[key]["pblh"].heights, "^", color="k",markersize=3)
+        # ax1.plot(data[key]["pblh"].time,data[key]["pblh"].heights, "^", color="k",markersize=3)
+        
+        # ax1.plot(data[key]["time"],df[1], "^", color="pink",markersize=3)
+        
     ax1.set_ylim([200,4000])
-    ax2.set_ylim([200,4000])
+    # ax2.set_ylim([200,4000])
     cbar = fig.colorbar(im1, ax=ax1, pad=0.01)
-    cbar = fig.colorbar(im2, ax=ax2, pad=0.01)
+    # cbar = fig.colorbar(im2, ax=ax2, pad=0.01)
     cbar.set_label('Aerosol Backscatter')
-    ax2.set_xlabel('Datetime (UTC)')
+    ax1.set_xlabel('Datetime (UTC)')
     ax1.set_ylabel('Altitude (m AGL)')
-    plt.suptitle("20210517_Catonsville-MD_CHM160112_000.nc")
+    plt.suptitle(key)
     plt.show()
 
     file_end_time = time.time()
     print(f"Execuded file in {round(file_end_time - file_start_time, 3)} seconds")
+    
+#%% 
+
+ 
+    
+    
