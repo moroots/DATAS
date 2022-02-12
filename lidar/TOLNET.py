@@ -37,6 +37,8 @@ def import_tolnet(FilePaths, **kwargs):
 
         data[fileName]["alt"] = file.select('ALTITUDE').get()
         data[fileName]["datetime"] = file.select('DATETIME.START').get() + 10957
+        if "local" in kwargs.keys():
+            data[fileName]["datetime"] = data[fileName]["datetime"] + (kwargs["local"]/24)
         data[fileName]["O3MX"] = file.select('O3.MIXING.RATIO.VOLUME_DERIVED').get()
         data[fileName]["O3MX"] = clean_vars(data[fileName]["O3MX"])*1000
         data[fileName]["O3ND"] = file.select('O3.NUMBER.DENSITY_ABSORPTION.DIFFERENTIAL').get()

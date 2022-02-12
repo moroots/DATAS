@@ -2,7 +2,7 @@
 """
 Created on Thu Jan 13 13:07:45 2022
 
-@author: MoRoots
+@author: Maurice Roots
 
 """
 
@@ -112,7 +112,7 @@ if __name__ == '__main__':
              "ylims": [0, 5],
              "yticks":np.arange(0.5, 5.1, 0.5),
              "title": r"UMBC Lufft CHM15K",
-             "savefig": f"{figPath}\\UMBC_Ceilometer_20210518_20210521.png"}
+             "savefig": f"{figPath}\\UMBC_Ceilometer_20200508.png"}
 
     plot(**parms)
 #%% Testbed
