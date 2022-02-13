@@ -21,6 +21,6 @@ This repo includes methods for remote sensing and in-situ insturments, as well a
 ---
 ## Installation
 **To install the latest version**
-'''python 
+```python 
 pip install git+https://github.com/moroots/DATAS
-'''
+```
