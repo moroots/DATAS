@@ -14,3 +14,13 @@ This repo includes methods for remote sensing and in-situ insturments, as well a
   - TOLNet.py
     - Will open and plot standard Tropospheric Ozone Lidar Network (TOLNET) HDF5 (".h5") files 
   - LidarUtilities.py
+
+
+
+
+---
+## Installation
+**To install the latest version**
+'''python 
+pip install git+https://github.com/moroots/DATAS
+'''
