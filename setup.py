@@ -16,7 +16,8 @@ with open(r"datas/requirements.txt", "r") as f:
 
 reqs = reqs.replace(" ", "")
 reqs = reqs.split("\n")
-reqs = [ x for x in reqs if "#" not in x ]
+reqs = [x for x in reqs if "#" not in x ]
+reqs = [x for x in reqs if "pyhdf" not in x]
 reqs = ' '.join(reqs)
 reqs = reqs.split()
 
