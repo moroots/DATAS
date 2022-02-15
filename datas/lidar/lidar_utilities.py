@@ -106,7 +106,7 @@ def calc_rayleigh_beta_dot_trans(wavelength, pressure, temperature, altitude, na
     numberDensity = calc_number_density(pressure, temperature, celsius=celsius)
     alpha = calc_rayleigh_extinction(wavelength, numberDensity)
     rayleigh_trans = calc_rayleigh_trans(alpha, altitude, kilometers=kilometers)
-    beta_dot_trans = beta * rayleigh_trans
+    beta_dot_trans = beta * (rayleigh_trans**2)
     return (beta_dot_trans, beta, numberDensity, alpha, rayleigh_trans)
     
 

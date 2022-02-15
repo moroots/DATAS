@@ -20,10 +20,10 @@ import xarray as xr
 import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 import matplotlib.units as munits
-
+from matplotlib.colors import LogNorm
 #%% Function Space
 
-def importing_ceilometer(FilePaths, **kwargs):
+def importing_ceilometer(FilePaths, variables=None, LT=None, **kwargs):
     data = {} # all data will be stored into a nested dictionary
     files = {}
     FilePaths = [Path(filePath) for filePath in FilePaths] # converting to Pathlib objects
@@ -36,9 +36,9 @@ def importing_ceilometer(FilePaths, **kwargs):
         fileName = filePath.name
         data[fileName] = {} # Nested Dictionary
         with xr.open_dataset(filePath) as file: # importing data as a xarrays instance
-            data[fileName]["time"] = file.time.values
-            data[fileName]["time"] = file.time.values
-            data[fileName]["dateNum"] = [mdates.date2num(t) for t in data[fileName]["time"]]
+            data[fileName]["datetime"] = file.time.values
+            data[fileName]["dateNum"] = np.array([mdates.date2num(t) for t in data[fileName]["datetime"]])
+            if LT: data[fileName]["dateNum"] = data[fileName]["dateNum"] + (LT/24)
             data[fileName]["range"] = file.range.values
             data[fileName]["beta_raw"] = file.beta_raw.values
             data[fileName]["beta_raw"][data[fileName]["beta_raw"] == 0] = np.float64(np.nan)
@@ -56,23 +56,28 @@ def importing_ceilometer(FilePaths, **kwargs):
     return data, files
 
 
-def plot(data, **kwargs):
+def plot(data, 
+         clims=[3.5, 8.5], 
+         cticks=np.arange(3.5, 8.6, 0.5), 
+         xlabel="Datetime (UTC)",
+         **kwargs):
+
     fig, ax = plt.subplots(figsize=(15, 8))
 
     for key in data.keys():
         X, Y, Z = (data[key]["dateNum"], data[key]["range"].flatten()/1000, np.log10(np.abs(data[key]["beta_raw"])))
-        im = ax.pcolormesh(X, Y, Z, cmap='jet', shading="nearest", vmin=3.5, vmax=8.5)
+        # X, Y, Z = (data[key]["dateNum"], data[key]["range"].flatten()/1000, np.abs(data[key]["beta_raw"]))
+        im = ax.pcolormesh(X, Y, Z, cmap='jet', shading="nearest", vmin=clims[0], vmax=clims[1])
 
-    ticks = np.arange(3.5, 8.6, 0.5)
-
-    fig.colorbar(im, ax=ax, pad=0.01, label=r"Aerosol Backscatter ($Log_{10}$)", ticks=ticks)
+    cbar = fig.colorbar(im, ax=ax, pad=0.01, ticks=cticks)
+    cbar.set_label(label=r"Aerosol Backscatter ($Log_{10}$)", size=16, weight="bold")
 
     if "title" in kwargs.keys():
-        plt.title(kwargs["title"], fontsize=18)
-    else: plt.title(r"Ceilometer Backscatter", fontsize=18)
+        plt.title(kwargs["title"], fontsize=20)
+    else: plt.title(r"Ceilometer Backscatter", fontsize=20)
 
     ax.set_ylabel("Altitude (km AGL)", fontsize=18)
-    ax.set_xlabel("Datetime (UTC)", fontsize=18)
+    ax.set_xlabel(xlabel, fontsize=18)
 
     if "xlims" in kwargs.keys():
         lim = kwargs["xlims"]
@@ -80,11 +85,15 @@ def plot(data, **kwargs):
         ax.set_xlim(lims)
 
     if "ylims" in kwargs.keys():
-        ax.set_ylim(kwargs["ylims"][0:2])
+        ax.set_ylim(kwargs["ylims"])
 
     if "yticks" in kwargs.keys():
-        ax.set_yticks(kwargs["yticks"])
-
+        ax.set_yticks(kwargs["yticks"], fontsize=20)
+        
+    plt.setp(ax.get_yticklabels(), fontsize=16)
+    plt.setp(ax.get_xticklabels(), fontsize=16)
+    cbar.ax.tick_params(labelsize=16)
+    
     converter = mdates.ConciseDateConverter()
     munits.registry[datetime] = converter
 
@@ -102,14 +111,15 @@ def plot(data, **kwargs):
 
 if __name__ == '__main__':
 
-    figPath = r"C:\Users\Magnolia\OneDrive - UMBC\Research\Analysis\May2021\Figures"
+    figPath = r"C:\Users\meroo\OneDrive - UMBC\Research\Analysis\May2021\Figures"
 
-    FilePaths = [r"C:/Users/Magnolia/OneDrive - UMBC/Research/Analysis/DATAS/lidar/samples/20200308_Catonsville-MD_CHM160112_000.nc"]
+    FilePaths = [r"C:/Users/meroo/OneDrive - UMBC/Research/Analysis/DATAS/datas/lidar/samples/20200308_Catonsville-MD_CHM160112_000.nc"]
 
     data, files = importing_ceilometer(FilePaths)
 
     parms = {"data": data,
              "ylims": [0, 5],
+             "clims": [4, 6],
              "yticks":np.arange(0.5, 5.1, 0.5),
              "title": r"UMBC Lufft CHM15K",
              "savefig": f"{figPath}\\UMBC_Ceilometer_20200508.png"}
