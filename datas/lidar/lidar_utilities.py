@@ -112,7 +112,7 @@ def calc_rayleigh_beta_dot_trans(wavelength, pressure, temperature, altitude, na
 
 def binned_alts(data_array, altitude, bins=np.arange(0, 15000, 100)):
         data = pd.DataFrame({"data":data_array, "altitude":altitude})
-        data["Alt_Bins"] = pd.cut(sonde.HGHT, bins=bins)
+        data["Alt_Bins"] = pd.cut(altitude, bins=bins)
         new = data.groupby("Alt_Bins").mean().reset_index()
         return new
 
