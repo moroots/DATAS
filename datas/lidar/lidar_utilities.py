@@ -109,6 +109,14 @@ def calc_rayleigh_beta_dot_trans(wavelength, pressure, temperature, altitude, na
     beta_dot_trans = beta * rayleigh_trans
     return (beta_dot_trans, beta, numberDensity, alpha, rayleigh_trans)
     
+
+def binned_alts(data_array, altitude, bins=np.arange(0, 15000, 100)):
+        data = pd.DataFrame({"data":data_array, "altitude":altitude})
+        data["Alt_Bins"] = pd.cut(sonde.HGHT, bins=bins)
+        new = data.groupby("Alt_Bins").mean().reset_index()
+        return new
+
+        
 #%%
 if __name__ == "__main__":
     names=["PRES", "HGHT", "TEMP", "DWPT", "RELH", "MIXR", "DRCT", "SKNT", "THTA", "THTE", "THTV"]
@@ -119,7 +127,6 @@ if __name__ == "__main__":
     
     wavelength = 1064; pressure = sonde["PRES"]; temperature=sonde["TEMP"]; altitude=sonde["HGHT"]
     
-
     
     beta_dot_trans, beta, numberDensity, alpha, rayleigh_trans = calc_rayleigh_beta_dot_trans(wavelength,
                                                                                               pressure, 
@@ -128,3 +135,4 @@ if __name__ == "__main__":
     import matplotlib.pyplot as plt
     plt.plot(beta_dot_trans, sonde["HGHT"])
     
+    test = binned_alts(beta_dot_trans, sonde["HGHT"])
