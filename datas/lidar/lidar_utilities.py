@@ -16,7 +16,54 @@ from scipy.interpolate import interp1d
 import pandas as pd
 import numpy as np
 
-#%%
+#%% Function Space
+
+def SA76(zkm):
+    # % [P,T,numberDensity] = SA76(zkm)
+    # % Returns the pressure [Pa], T [K], numberDensity [m^-3] for the
+    # % Standard Atmosphere 1976 for 0 <= zkm <= 86 km (Geometric).
+    # %
+    M = 28.9644 # Average molecular weight for air
+    g0 = 9.80665 # m/s^2 acceleration due to gravity
+    RE = 6378.14 # Earth's radius [km]
+    # T0 = 288.15 # 15C
+    # P0 = 101325.0 # 1 atmospere [Pa]
+    R = 8.31447 # Gas Constant [J/K/mol]
+    # kB = 1.38065e-23 # [J/K] Boltzmann's Constant
+    
+    try:
+        n = len(zkm)
+    except TypeError:
+        n = 1
+        zkm = np.array([zkm])
+    P = np.zeros_like(zkm)
+    T = np.zeros_like(zkm)
+    # numberDensity =  np.zeros_like(zkm)
+    ##% Geopotential Heights
+    hTbl= np.array([0.0, 11.0, 20.0, 32.0, 47.0, 51.0, 71.0, RE*86.0/(RE+86.0)])
+    # %Temperature gradient in each Layer
+    dtdhTbl= np.array([-6.5, 0.0, 1.0, 2.8, 0.0, -2.8, -2.0])
+    # %Temperature Table
+    tempTbl = np.array([288.15, 216.65, 216.65, 228.65, 270.65, 270.65, 214.65, 186.938])
+    # %Pressure Table
+    pressureTbl = np.array([101325.0, 22632.7, 5475.18, 868.094, 110.92, 66.9478, 3.95715, 0.373207])
+    
+    
+    for k in range(n):
+        h = zkm[k]*RE/(zkm[k]+RE)
+        # %Find the layer
+        # i = int(hTbl[hTbl<= h].sum())
+        i = int(np.sum(hTbl<= h))-1
+        T[k] = tempTbl[i]+dtdhTbl[i]*(h-hTbl[i])
+        if abs(dtdhTbl[i]) <=0.001:
+            ratio = np.exp(-M*g0*(h-hTbl[i])/(R*tempTbl[i]))
+        else:
+            ratio = ((tempTbl[i]+dtdhTbl[i]*(h-hTbl[i]))/tempTbl[i])**(-M*g0/(R*dtdhTbl[i]))
+
+        P[k]= ratio*pressureTbl[i];
+    
+    # numberDensity = P/(kB*T);
+    return P,T
 
 def calc_beta_rayleigh(wavelength, P, T, nanometers=True):
     if nanometers is True: wavelength = wavelength * 10**-9
@@ -125,14 +172,16 @@ if __name__ == "__main__":
     
     sonde = pd.read_csv(sondePath, skiprows=5, nrows=108-5, sep="\s+", names=names)
     
-    wavelength = 1064; pressure = sonde["PRES"]; temperature=sonde["TEMP"]; altitude=sonde["HGHT"]
-    
+    # wavelength = 1064; pressure = sonde["PRES"]; temperature=sonde["TEMP"]; altitude=sonde["HGHT"]
+    wavelength = 1064; 
+    altitude = np.arange(0, 15, 0.001)
+    pressure, temperature = SA76(altitude)
     
     beta_dot_trans, beta, numberDensity, alpha, rayleigh_trans = calc_rayleigh_beta_dot_trans(wavelength,
                                                                                               pressure, 
                                                                                               temperature, 
                                                                                               altitude)
     import matplotlib.pyplot as plt
-    plt.plot(beta_dot_trans, sonde["HGHT"])
+    plt.plot(beta_dot_trans, altitude)
     
-    test = binned_alts(beta_dot_trans, sonde["HGHT"])
+    test = binned_alts(beta_dot_trans, altitude)
