@@ -41,7 +41,7 @@ def importing_ceilometer(FilePaths, variables=None, LT=None, **kwargs):
             if LT: data[fileName]["dateNum"] = data[fileName]["dateNum"] + (LT/24)
             data[fileName]["range"] = file.range.values
             data[fileName]["beta_raw"] = file.beta_raw.values
-            data[fileName]["beta_raw"][data[fileName]["beta_raw"] == 0] = np.float64(np.nan)
+            # data[fileName]["beta_raw"][data[fileName]["beta_raw"] == 0] = np.float64(np.nan)
             data[fileName]["beta_raw"] = data[fileName]["beta_raw"].T
             data[fileName]["instrument_pbl"] = file.pbl.values
             data[fileName]["lat_lon_alt"] = [file.longitude.values, file.latitude.values, file.altitude.values]
