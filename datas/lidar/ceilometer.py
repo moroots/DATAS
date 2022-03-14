@@ -65,9 +65,10 @@ def plot(data,
     fig, ax = plt.subplots(figsize=(15, 8))
 
     for key in data.keys():
-        X, Y, Z = (data[key]["dateNum"], data[key]["range"].flatten()/1000, np.log10(np.abs(data[key]["beta_raw"])))
+        # X, Y, Z = (data[key]["dateNum"], data[key]["range"].flatten()/1000, np.log10(np.abs(data[key]["beta_raw"])))
         # X, Y, Z = (data[key]["dateNum"], data[key]["range"].flatten()/1000, np.abs(data[key]["beta_raw"]))
-        im = ax.pcolormesh(X, Y, Z, cmap='jet', shading="nearest", vmin=clims[0], vmax=clims[1])
+        # im = ax.pcolormesh(X, Y, Z, cmap="viridis", shading="nearest", norm = LogNorm(vmin=0.1, vmax=10**5))
+        # im = ax.imshow(Z.T, vmin=0.1, vmax=10**5, origin="lower", aspect=100)
 
     cbar = fig.colorbar(im, ax=ax, pad=0.01, ticks=cticks)
     cbar.set_label(label=r"Aerosol Backscatter ($Log_{10}$)", size=16, weight="bold")
@@ -118,7 +119,7 @@ if __name__ == '__main__':
     data, files = importing_ceilometer(FilePaths)
 
     parms = {"data": data,
-             "ylims": [0, 5],
+             "ylims": [0, 10],
              "clims": [4, 6],
              "yticks":np.arange(0.5, 5.1, 0.5),
              "title": r"UMBC Lufft CHM15K",

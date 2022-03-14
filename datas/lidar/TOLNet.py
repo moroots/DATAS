@@ -54,7 +54,6 @@ def import_tolnet(FilePaths, **kwargs):
     return data
 
 def O3_curtain_colors():
-
     ncolors = [np.array([255,  140,  255]) / 255.,
        np.array([221,  111,  242]) / 255.,
        np.array([187,  82,  229]) / 255.,
@@ -154,26 +153,26 @@ def tolnet_curtains(data, smooth=True, **kwargs):
 #%%
 
 if __name__ == "__main__":
-        
+
     files = [r"C:/Users/meroo/OneDrive - UMBC/Research/Analysis/May2021/data/TROPOZ/lidar/groundbased_lidar.o3_nasa.gsfc003_hires_goddard.space.flight.center.md_20210523t000000z_20210524t000000z_001.hdf",
     "C:/Users/meroo/OneDrive - UMBC/Research/Analysis/May2021/data/TROPOZ/lidar/groundbased_lidar.o3_nasa.gsfc003_hires_goddard.space.flight.center.md_20210518t000000z_20210519t000000z_001.hdf",
     "C:/Users/meroo/OneDrive - UMBC/Research/Analysis/May2021/data/TROPOZ/lidar/groundbased_lidar.o3_nasa.gsfc003_hires_goddard.space.flight.center.md_20210519t000000z_20210520t000000z_001.hdf",
     "C:/Users/meroo/OneDrive - UMBC/Research/Analysis/May2021/data/TROPOZ/lidar/groundbased_lidar.o3_nasa.gsfc003_hires_goddard.space.flight.center.md_20210520t000000z_20210521t000000z_001.hdf",
     "C:/Users/meroo/OneDrive - UMBC/Research/Analysis/May2021/data/TROPOZ/lidar/groundbased_lidar.o3_nasa.gsfc003_hires_goddard.space.flight.center.md_20210521t000000z_20210522t000000z_001.hdf",
     "C:/Users/meroo/OneDrive - UMBC/Research/Analysis/May2021/data/TROPOZ/lidar/groundbased_lidar.o3_nasa.gsfc003_hires_goddard.space.flight.center.md_20210522t000000z_20210523t000000z_001.hdf"]
-    
+
     figPath = r"C:\Users\meroo\OneDrive - UMBC\Research\Analysis\May2021\Figures"
-    
+
     data = import_tolnet(files)
-    
+
     #%%
     parms = {"data": data,
              "ylims":[0.1, 3.1, 0.4],
              "title":r"TROPOZ $O_3$ Profile ($ppb_v$)"
              }
-    
+
     tolnet_curtains(**parms, xlims=["2021-05-18 12:00", "2021-05-23 00:00"], savefig=f"{figPath}\\TROPOZ_20210518_20210523.png")
-    
+
     tolnet_curtains(**parms, xlims=["2021-05-18 12:00", "2021-05-21 00:00"], savefig=f"{figPath}\\TROPOZ_20210518_20210521.png")
-    
+
     tolnet_curtains(**parms, xlims=["2021-05-20 00:00", "2021-05-21 00:00"], savefig=f"{figPath}\\20210520_20210521.png")
