@@ -21,8 +21,8 @@ import matplotlib.pyplot as plt
 import matplotlib.dates as mdates
 import matplotlib.units as munits
 from matplotlib.colors import LogNorm
-#%% Function Space
 
+# Function Space
 def importing_ceilometer(FilePaths, variables=None, LT=None, **kwargs):
     data = {} # all data will be stored into a nested dictionary
     files = {}
@@ -41,7 +41,7 @@ def importing_ceilometer(FilePaths, variables=None, LT=None, **kwargs):
             if LT: data[fileName]["dateNum"] = data[fileName]["dateNum"] + (LT/24)
             data[fileName]["range"] = file.range.values
             data[fileName]["beta_raw"] = file.beta_raw.values
-            # data[fileName]["beta_raw"][data[fileName]["beta_raw"] == 0] = np.float64(np.nan)
+            data[fileName]["beta_raw"][data[fileName]["beta_raw"] == 0] = np.nan
             data[fileName]["beta_raw"] = data[fileName]["beta_raw"].T
             data[fileName]["instrument_pbl"] = file.pbl.values
             data[fileName]["lat_lon_alt"] = [file.longitude.values, file.latitude.values, file.altitude.values]
@@ -56,19 +56,17 @@ def importing_ceilometer(FilePaths, variables=None, LT=None, **kwargs):
     return data, files
 
 
-def plot(data, 
-         clims=[3.5, 8.5], 
-         cticks=np.arange(3.5, 8.6, 0.5), 
+def plot(data,
+         clims=[10**4, 10**6],
+         cticks=np.arange(10**4, 10**6, (10**6 - 10**4) / 5),
          xlabel="Datetime (UTC)",
          **kwargs):
 
     fig, ax = plt.subplots(figsize=(15, 8))
 
     for key in data.keys():
-        # X, Y, Z = (data[key]["dateNum"], data[key]["range"].flatten()/1000, np.log10(np.abs(data[key]["beta_raw"])))
-        # X, Y, Z = (data[key]["dateNum"], data[key]["range"].flatten()/1000, np.abs(data[key]["beta_raw"]))
-        # im = ax.pcolormesh(X, Y, Z, cmap="viridis", shading="nearest", norm = LogNorm(vmin=0.1, vmax=10**5))
-        # im = ax.imshow(Z.T, vmin=0.1, vmax=10**5, origin="lower", aspect=100)
+        X, Y, Z = (data[key]["dateNum"], data[key]["range"].flatten()/1000, np.abs(data[key]["beta_raw"]))
+        im = ax.pcolormesh(X, Y, Z, cmap="viridis", shading="nearest", norm=LogNorm(vmin=clims[0], vmax=clims[1]))
 
     cbar = fig.colorbar(im, ax=ax, pad=0.01, ticks=cticks)
     cbar.set_label(label=r"Aerosol Backscatter ($Log_{10}$)", size=16, weight="bold")
@@ -90,22 +88,29 @@ def plot(data,
 
     if "yticks" in kwargs.keys():
         ax.set_yticks(kwargs["yticks"], fontsize=20)
-        
+
     plt.setp(ax.get_yticklabels(), fontsize=16)
     plt.setp(ax.get_xticklabels(), fontsize=16)
     cbar.ax.tick_params(labelsize=16)
-    
+
     converter = mdates.ConciseDateConverter()
     munits.registry[datetime] = converter
 
     ax.xaxis_date()
-
+    
+    if "target" in kwargs.keys():
+        #add rectangle to plot
+        ax.add_patch(Rectangle(*kwargs["target"],
+             edgecolor = 'pink',
+             fill=False,
+             lw=1))
+        
     if "savefig" in kwargs.keys():
         plt.savefig(f"{kwargs['savefig']}", dpi=300)
 
     plt.show()
 
-    return
+    return (X, Y, Z)
 
 
 #%% Execution
