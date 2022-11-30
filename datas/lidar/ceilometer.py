@@ -59,17 +59,17 @@ def importing_ceilometer(FilePaths, variables=None, LT=None, **kwargs):
 def plot(data,
          clims=[10**4, 10**6],
          cticks=np.arange(10**4, 10**6, (10**6 - 10**4) / 5),
-         xlabel="Datetime (UTC)",
+         xlabel="Datetime (UTC)", cmap="jet",
          **kwargs):
 
     fig, ax = plt.subplots(figsize=(15, 8))
 
     for key in data.keys():
         X, Y, Z = (data[key]["dateNum"], data[key]["range"].flatten()/1000, np.abs(data[key]["beta_raw"]))
-        im = ax.pcolormesh(X, Y, Z, cmap="viridis", shading="nearest", norm=LogNorm(vmin=clims[0], vmax=clims[1]))
+        im = ax.pcolormesh(X, Y, Z, cmap=cmap, shading="nearest", norm=LogNorm(vmin=clims[0], vmax=clims[1]))
 
     cbar = fig.colorbar(im, ax=ax, pad=0.01, ticks=cticks)
-    cbar.set_label(label=r"Aerosol Backscatter ($Log_{10}$)", size=16, weight="bold")
+    cbar.set_label(label=r"Aerosol Backscatter ($Log_{10}$)", size=16)
 
     if "title" in kwargs.keys():
         plt.title(kwargs["title"], fontsize=20)
@@ -119,16 +119,22 @@ if __name__ == '__main__':
 
     figPath = r"C:\Users\meroo\OneDrive - UMBC\Research\Analysis\May2021\Figures"
 
-    FilePaths = [r"C:/Users/meroo/OneDrive - UMBC/Research/Analysis/DATAS/datas/lidar/samples/20200308_Catonsville-MD_CHM160112_000.nc"]
+    FilePaths = [r"C:/Users/meroo/OneDrive - UMBC/Research/Analysis/May2021/data/Ceilometer/GSFC/20210519_TROPOZ_CHM200123_000.nc",
+r"C:/Users/meroo/OneDrive - UMBC/Research/Analysis/May2021/data/Ceilometer/GSFC/20210520_TROPOZ_CHM200123_000.nc",
+r"C:/Users/meroo/OneDrive - UMBC/Research/Analysis/May2021/data/Ceilometer/GSFC/20210521_TROPOZ_CHM200123_000.nc"]
 
-    data, files = importing_ceilometer(FilePaths)
+    data, files = importing_ceilometer(FilePaths, LT=-4)
 
     parms = {"data": data,
-             "ylims": [0, 10],
-             "clims": [4, 6],
-             "yticks":np.arange(0.5, 5.1, 0.5),
-             "title": r"UMBC Lufft CHM15K",
-             "savefig": f"{figPath}\\UMBC_Ceilometer_20200508.png"}
+             "ylims": [0, 3],
+             "clims": [10**4.5, 10**7],
+             "cticks": [10**i for i in range(2, 8)],
+             "xlims": ["2021-05-19 20:00", "2021-05-21 00:00"],
+             "yticks":np.arange(0.5, 3.1, 0.5),
+             "title": r"TROPOZ Ceilometer Lufft CHM15K",
+             "cmap": "nipy_spectral",
+             "xlabel": "Local Time (UTC -4)",
+             "savefig": f"{figPath}\\GSFC_Ceilometer_2021051920_2021052100.png"}
 
     plot(**parms)
 #%% Testbed
