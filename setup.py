@@ -23,9 +23,9 @@ reqs = reqs.split()
 
 setup(
     name='datas',
-    version='2022.04.14.1',
+    version='2023.03.15.1',
     author='Maurice Roots',
-    author_email='mroots1@umbc.edu',
+    author_email='themauriceroots@gmail.com',
     description='Data Analysis Tools for Atmsopheric Science',
     long_description=long_description,
     long_description_content_type="text/markdown",
