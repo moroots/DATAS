@@ -1,4 +1,4 @@
-# Data Analysis Tools for Atmoshperic Science (DATAS)
+# Data Analysis Tools for Atmospheric Science (DATAS)
 
 ### Author: Maurice Roots
 ### Collaborators: Kylie Hoffman, Ruben Delgado, Noah Sienkiewicz
