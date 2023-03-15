@@ -2,7 +2,7 @@
 """
 Created on Wed Oct 19 10:33:25 2022
 
-@author: Magnolia
+@author: MRoots
 """
 
 from pathlib import Path
@@ -307,9 +307,10 @@ class utils:
 if __name__ == "__main__":
     dir_path = Path(r"./data/beltsville")
     figpath = dir_path / "figures"; figpath.mkdir(parents=True, exist_ok=True)
-    test = RWP().read_RWP(dir_path, LT=-4, troubleshoot=True)
+    rwp = RWP()
+    data = rwp.read_RWP(dir_path, LT=-4, troubleshoot=True)
     
-    for key in test.keys():
-        RWP().plot(test[key])
+    for key in data.keys():
+        rwp.plot(data[key])
         plt.savefig(f"{figpath / key}.png", dpi=300)
         plt.close()
