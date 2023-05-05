@@ -8,58 +8,127 @@ Surface Data
 
 """
 
-import os
-import glob
-import numpy as np
+import requests
 import pandas as pd
-import matplotlib.pyplot as plt
-import matplotlib.dates as mdates
-from datetime import datetime
-import matplotlib.dates as mdates
+import json
 
-class airdata:
-    def byState(df, str_state):
-        grouped = df.groupby("State Name")
-        return grouped.get_group(str_state)
 
-    def import_hourly(path):
-        uL = {}
-        print(f'Importing EPA AirData from {path} \n')
-        for filename in glob.glob(os.path.join(path, '*.csv')):
-           with open(os.path.join(path, filename), 'r') as f: # open in readonly mode
-               names = {}
-               uL2 = pd.read_csv(f, low_memory=False)
-               states = unique(uL2['State Name'])
-               for state in states:
-                   names[state] = airdata.byState(uL2, state)
-               uL[filename.split('\\')[-1]] = names
-               print(filename.split('\\')[-1], '\t -> Loaded')
+def import_epa_aqs_data(year, molecule):
+    # Define the URL for the csv file
+    url = f'https://aqs.epa.gov/aqsweb/airdata/daily_{molecule}_by_year.zip'
 
-        name = list(uL.keys())
-        return uL, name
+    # Load the data from the csv file into a Pandas DataFrame
+    df = pd.read_csv(url, compression='zip')
 
-    def format_dates(datelist, timelist):
-        return [datetime(int(datelist[i].split("-")[0]), int(datelist[i].split("-")[1]), int(datelist[i].split("-")[2]), int(timelist[i].split(":")[0])) for i in range(0, len(datelist))]
+    # Filter the data by year
+    df = df[df['Year'] == year]
 
-    def filter_avg(in_list, in_times, start_time, end_time):
-        filtered = []
-        for i in range(0, len(in_list)):
-            if in_times[i].hour >= start_time and in_times[i].hour <= end_time:
-                filtered.append(in_list[i])
-        return sum(filtered) / len(filtered)
+    # Return the filtered DataFrame
+    return df
 
-    def filter_avg_by_day(in_list, in_times, start_hour, end_hour):
-        dates = {}
-        # For each item in list, filter by start/end hour and add them to a dict where the key is the day
-        for i in range(0, len(in_list)):
-            if in_times[i].hour >= start_hour and in_times[i].hour <= end_hour:
-                date = f'{in_times[i].year}-{in_times[i].month}-{in_times[i].day}'
-                if date not in dates:
-                    dates[date] = [in_list[i]]
-                else:
-                    dates[date].append(in_list[i])
-        # Calculate averages and replace individual values
-        for key in dates:
-            dates[key] = sum(dates[key])/len(dates[key])
-        return dates
+import pandas as pd
 
+def get_parameter_id(molecule_name):
+    molecule_name = molecule_name.lower()
+    parameter_map = {
+        'ozone': '44201',
+        'carbon monoxide': '42101',
+        'sulfur dioxide': '42401',
+        'nitrogen dioxide (NO2)': '42602',
+        'pm25': '88101',
+        'pm10': '88502'
+    }
+    return parameter_map.get(molecule_name, molecule_name)
+
+def import_hourly_data(year, molecule):
+    """
+    Import hourly data from AQS website for a given year and molecule.
+
+    Parameters:
+    year (str): Year of data to import.
+    molecule (str): Molecule to import data for.
+
+    Returns:
+    df (pandas.DataFrame): Hourly data for the specified year and molecule.
+    """
+
+    # Create URL for hourly data based on year and molecule
+    url = f'https://aqs.epa.gov/aqsweb/airdata/hourly_{get_parameter_id(molecule)}_{year}.zip'
+
+    # Read hourly data CSV from ZIP file on website
+    try:
+        df = pd.read_csv(url, compression='zip', low_memory=False)
+    except Exception as e:
+        print(f"Error importing data for {molecule} in {year}: {e}")
+        return None
+
+    return df
+
+import pandas as pd
+import io
+import requests
+
+def import_aqs_data(year, parameter, state):
+    url = f"https://aqs.epa.gov/aqsweb/airdata/hourly_{parameter.lower()}_{year}.zip"
+    content = requests.get(url).content
+    df = pd.read_csv(io.StringIO(content.decode('utf-8')), compression='zip')
+    df = df[df['State Name'] == state]
+    return df
+
+
+def filter_by_borders(df, lat_min, lat_max, lon_min, lon_max):
+    """
+    Filters a DataFrame by latitude and longitude borders.
+
+    Args:
+        df: A pandas DataFrame with columns for latitude and longitude.
+        lat_min: The minimum latitude value for the border.
+        lat_max: The maximum latitude value for the border.
+        lon_min: The minimum longitude value for the border.
+        lon_max: The maximum longitude value for the border.
+
+    Returns:
+        A filtered DataFrame that only includes rows where the latitude
+        and longitude fall within the specified borders.
+    """
+    return df[(df['Latitude'] >= lat_min) & (df['Latitude'] <= lat_max) &
+              (df['Longitude'] >= lon_min) & (df['Longitude'] <= lon_max)]
+
+df = import_hourly_data("2016", "Ozone")
+
+#%%
+
+lat_min = 34.0228
+lat_max = 41.5145
+lon_min = -85.3635
+lon_max = -72.7951
+
+# Filter data by borders
+filtered_df = filter_by_borders(df, lat_min, lat_max, lon_min, lon_max)
+
+
+#%%
+# from numba import jit
+
+# @jit(nopython=False)
+def create_nested_dict(df):
+    # Initialize empty dictionary
+    nested_dict = {}
+
+    # Group DataFrame by state and site
+    grouped_df = df.groupby(['State Name', 'Site Num'])
+
+    # Iterate over groups
+    for (state, site), site_df in grouped_df:
+        # Create site dictionary using dictionary comprehension
+        site_dict = {row['Date Local']: {param: row[param] for param in df.columns if param not in ['State Name', 'County Name', 'Site Num', 'Date Local']} for _, row in site_df.iterrows()}
+
+        # Add site dictionary to state dictionary
+        if state not in nested_dict:
+            nested_dict[state] = {}
+
+        nested_dict[state][site] = site_dict
+
+    return nested_dict
+
+nested_dictioanry = create_nested_dict(filtered_df)
