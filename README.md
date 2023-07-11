@@ -8,12 +8,33 @@
 This repo includes methods for remote sensing and in-situ insturments, as well as helper functions. 
 
 ### Organization:
-- Lidar
+- AERONET
+- aeronet
+- campaigns
+- lidar
+  - data
+  - samples
   - ceilometer.py
-    - Will open and plot lufft ceilometer NETCDF (".nc") files
+  - lidar_utilities
+- TOLNet
   - TOLNet.py
-    - Will open and plot standard Tropospheric Ozone Lidar Network (TOLNET) HDF5 (".h5") files 
-  - LidarUtilities.py
+- pandora
+- sample_data
+- sondes
+  - SketT.py
+  - sondes.py
+- surface
+  - Surface_EPA.py
+  - surface.py
+- tutorials
+  - data
+  - RadarWindProfilers.py
+  - TOLNet_API.ipynb
+  - 
+- utilities
+  - untar.py
+- windprofilers
+  - RWP
 
 
 
