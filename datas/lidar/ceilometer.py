@@ -138,3 +138,5 @@ r"C:/Users/meroo/OneDrive - UMBC/Research/Analysis/May2021/data/Ceilometer/GSFC/
 
     plot(**parms)
 #%% Testbed
+
+path = r"C:\Users\meroo\OneDrive - UMBC\Research\Analysis\DATAS\datas\tutorials\data"

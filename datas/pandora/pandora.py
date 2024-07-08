@@ -166,50 +166,50 @@ class pandonia:
 
 if __name__ == '__main__':
 
-    from bs4 import BeautifulSoup
-    import requests
-    from pathlib import Path
-    import os
+    # from bs4 import BeautifulSoup
+    # import requests
+    # from pathlib import Path
+    # import os
 
-    # def data_pandonia_database():
+    # # def data_pandonia_database():
 
 
-    def data_pandonia_download(location, instrument, level, file, destination_path):
-        if location is not type([]): location = [location]
-        if instrument is not type([]): instrument = [instrument]
-        if level is not type([]): level = [level]
+    # def data_pandonia_download(location, instrument, level, file, destination_path):
+    #     if location is not type([]): location = [location]
+    #     if instrument is not type([]): instrument = [instrument]
+    #     if level is not type([]): level = [level]
 
-        for loc in location:
-            for instr in instrument:
-                for ft in filetype:
-                    if file is not type([]):
-                        file = [file]
-                    elif file == 'all':
-                        path = "http://data.pandonia-global-network.org/{loc}/{instr}/{ft}/{fil}"
-                        page = requests.get(file_url)
+    #     for loc in location:
+    #         for instr in instrument:
+    #             for ft in filetype:
+    #                 if file is not type([]):
+    #                     file = [file]
+    #                 elif file == 'all':
+    #                     path = "http://data.pandonia-global-network.org/{loc}/{instr}/{ft}/{fil}"
+    #                     page = requests.get(file_url)
 
-                    for fil in file:
-                        path = "http://data.pandonia-global-network.org/{loc}/{instr}/{ft}/{fil}"
-                        file_url = parent + path
-                        page = requests.get(file_url)
+    #                 for fil in file:
+    #                     path = "http://data.pandonia-global-network.org/{loc}/{instr}/{ft}/{fil}"
+    #                     file_url = parent + path
+    #                     page = requests.get(file_url)
 
-                        savnam = destination_path / Path(path)
-                        os.makedirs(os.path.dirname(savnam), exist_ok=True)
-                        with open(savnam, 'wb') as f:
-                            f.write(page.content)
-                            f.close()
-                        print(f"Downloaded -> {fil}")
+    #                     savnam = destination_path / Path(path)
+    #                     os.makedirs(os.path.dirname(savnam), exist_ok=True)
+    #                     with open(savnam, 'wb') as f:
+    #                         f.write(page.content)
+    #                         f.close()
+    #                     print(f"Downloaded -> {fil}")
 
-        # if 'all' in file
+    #     # if 'all' in file
 
-        return
+    #     return
 
-    destination_path = r"C:\Users\Magnolia\OneDrive - UMBC\Research\Data\Smoke Case 20200308\Pandora"
-    location = r"GreenbeltMD"
-    instrument = r"Pandora32s1"
-    filetype = r"L1"
-    file = r"Pandora32s1_GreenbeltMD_20171222_L1_smca1c1p1-7.txt.bz2"
-    data_pandonia_download(location, instrument, filetype, file, destination_path)
+    # destination_path = r"C:\Users\Magnolia\OneDrive - UMBC\Research\Data\Smoke Case 20200308\Pandora"
+    # location = r"GreenbeltMD"
+    # instrument = r"Pandora32s1"
+    # filetype = r"L1"
+    # file = r"Pandora32s1_GreenbeltMD_20171222_L1_smca1c1p1-7.txt.bz2"
+    # data_pandonia_download(location, instrument, filetype, file, destination_path)
 
 
 
